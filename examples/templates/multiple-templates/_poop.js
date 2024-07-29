@@ -21,7 +21,7 @@ import path from "path";
 import chalk from "chalk";
 import * as p from "@clack/prompts";
 
-/** @type{import("../../../src/index").BeforeFn}  */
+/** @type{import("poopgen").BeforeFn}  */
 export async function before(ctx) {
 	p.intro("create-my-app")
 
@@ -111,7 +111,7 @@ export async function before(ctx) {
 	ctx.entries = [templateDir, "[.gitignore]", "README.md.ejs"];
 }
 
-/** @type{import("../../../src/index").BeforeFn}  */
+/** @type{import("poopgen").BeforeFn}  */
 export async function after(ctx) {
 	// at this point, poopgen is done with generating the files for the project.
 	// this is where you may ask the user if they want to initialize a git repo or install node modules
