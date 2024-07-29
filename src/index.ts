@@ -53,14 +53,14 @@ export type PoopgenOptions = {
 	jsonSpace?: string | number;
 };
 
-export async function poopgen(opts: PoopgenOptions) {
-	const cwd = opts.cwd ?? process.cwd();
-	const jsonSpace = opts.jsonSpace ?? "\t";
-	const baseTemplatePath = path.join(cwd, opts.templateDir ?? "/template");
-	const baseDestPath = opts.destDir ? path.join(cwd, opts.destDir) : cwd;
+export async function poopgen(opts?: PoopgenOptions) {
+	const cwd = opts?.cwd ?? process.cwd();
+	const jsonSpace = opts?.jsonSpace ?? "\t";
+	const baseTemplatePath = path.join(cwd, opts?.templateDir ?? "/template");
+	const baseDestPath = opts?.destDir ? path.join(cwd, opts.destDir) : cwd;
 
 	const initialContext: DirectoryContext = {
-		data: opts.data ?? {},
+		data: opts?.data ?? {},
 		entries: [],
 		templatePath: baseTemplatePath,
 		destPath: baseDestPath,
