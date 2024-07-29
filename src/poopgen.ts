@@ -3,6 +3,7 @@ import fs from "fs/promises";
 import ejs from "ejs";
 import { PoopgenError } from "./errors";
 
+// todo consider the CWD functionality
 // todo should the root folder template folder be ignored of special folders (_+-)
 // todo could there be better err handling?
 // todo consider adding error boundaries in poopfiles
@@ -49,15 +50,13 @@ export type PoopgenOptions = {
 	templateDir?: string;
 	data?: TemplateData;
 	destDir?: string;
-	cwd?: string;
 	jsonSpace?: string | number;
 };
 
 export async function poopgen(opts?: PoopgenOptions) {
-	const cwd = opts?.cwd ?? process.cwd();
 	const jsonSpace = opts?.jsonSpace ?? "\t";
-	const baseTemplatePath = path.join(cwd, opts?.templateDir ?? "/template");
-	const baseDestPath = opts?.destDir ? path.join(cwd, opts.destDir) : cwd;
+	const baseTemplatePath = path.resolve(opts?.templateDir ?? "/template");
+	const baseDestPath = opts?.destDir ? path.resolve(opts.destDir) : process.cwd();
 
 	const initialContext: DirectoryContext = {
 		data: opts?.data ?? {},
