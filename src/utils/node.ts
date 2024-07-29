@@ -1,4 +1,6 @@
+import path from "path";
 import { execa, type Options } from "execa";
+import { DirectoryContext } from "../poopgen";
 
 /**
  * Converts a string into valid node package format (kebab case)
@@ -14,6 +16,19 @@ export const toValidNodePackageName = (name: string) =>
 export const supportedPackageManagers = ["npm", "yarn", "pnpm"] as const;
 
 export type SupportedPackageManager = (typeof supportedPackageManagers)[number];
+
+// todo make sure this is perfect
+// export function parseProjectName(name: string, ctx: DirectoryContext) {
+// 	const projectDir = path.join(ctx.destPath, name);
+// 	const projectName = path.basename(projectDir);
+// 	const packageName = toValidNodePackageName(projectName);
+
+// 	return {
+// 		dir: projectDir,
+// 		name: projectName,
+// 		packageName
+// 	};
+// }
 
 /**
  * Gets the current node package manager. Defaults to npm

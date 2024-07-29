@@ -5,7 +5,7 @@ import { execa, type Options } from "execa";
 /**
  * Returns a boolean representing if the directory contains a git repository.
  */
-export async function dirHasGitRepo(dir: string) {
+export function dirHasGitRepo(dir: string) {
 	return fs.existsSync(path.join(dir, ".git"));
 }
 
