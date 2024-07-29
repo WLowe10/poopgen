@@ -1,0 +1,76 @@
+{
+	"name": "poopgen",
+	"version": "0.1.0",
+	"description": "Simple and flexible project generator",
+	"license": "MIT",
+	"author": {
+		"name": "Wes Lowe",
+		"email": "wesley.jlowe10@gmail.com"
+	},
+	"keywords": [
+		"generator"
+	],
+	"repository": {
+		"type": "git",
+		"url": ""
+	},
+	"type": "module",
+	"sideEffects": false,
+	"main": "./dist/index.cjs",
+	"module": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"import": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			},
+			"require": {
+				"types": "./dist/index.d.cts",
+				"default": "./dist/index.cjs"
+			}
+		},
+		"./utils": {
+			"import": {
+				"types": "./dist/utils/index.d.ts",
+				"default": "./dist/utils/index.js"
+			},
+			"require": {
+				"types": "./dist/utils/index.d.cts",
+				"default": "./dist/utils/index.cjs"
+			}
+		}
+	},
+	"files": [
+		"dist",
+		"package.json",
+		"README.md"
+	],
+	"scripts": {
+		"build": "tsup src/index.ts src/utils/index.ts --dts --format esm,cjs",
+		"format": "prettier --write .",
+		"publish-package": "pnpm build && pnpm publish",
+		"clean": "pnpm clean:dist && pnpm clean:modules",
+		"clean:dist": "rm -rm dist",
+		"clean:modules": "rm -rm node_modules",
+		"type-check": "tsc --noEmit",
+		"dev": "tsx dev"
+	},
+	"dependencies": {
+		"ejs": "^3.1.10",
+		"execa": "^9.3.0"
+	},
+	"devDependencies": {
+		"@clack/prompts": "^0.7.0",
+		"@types/ejs": "^3.1.5",
+		"@types/fs-extra": "^11.0.4",
+		"@types/node": "^20.14.12",
+		"chalk": "^5.3.0",
+		"fs-extra": "^11.2.0",
+		"ora": "^8.0.1",
+		"prettier": "^3.3.2",
+		"tsup": "^8.1.0",
+		"tsx": "^4.16.2",
+		"typescript": "^5.5.3"
+	}
+}

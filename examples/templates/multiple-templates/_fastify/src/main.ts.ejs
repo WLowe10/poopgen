@@ -1,0 +1,10 @@
+import Fastify from "fastify";
+
+const fastify = Fastify();
+
+fastify.get("/", (request, reply) => {
+	reply.send("Hello world from <%= packageName %>!");
+});
+
+// Run the server!
+fastify.listen({ port: 3000 });
