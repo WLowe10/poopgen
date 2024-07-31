@@ -1,12 +1,8 @@
 import path from "path";
 import fs from "fs/promises";
 import ejs from "ejs";
-import { PoopgenError } from "./errors";
 
-// todo consider the CWD functionality
-// todo should the root folder template folder be ignored of special folders (_+-)
 // todo could there be better err handling?
-// todo consider adding error boundaries in poopfiles
 
 export type TemplateData = Record<string, any>;
 
@@ -42,7 +38,7 @@ async function loadPoopModule(path: string): Promise<PoopModule> {
 	try {
 		return await import(path);
 	} catch (err) {
-		throw new PoopgenError(`Failed to import poopfile at ${path}`, err);
+		throw new Error(`Failed to import poopfile at ${path}`);
 	}
 }
 
@@ -57,16 +53,9 @@ export async function poopgen(opts?: PoopgenOptions) {
 	const jsonSpace = opts?.jsonSpace ?? "\t";
 	const baseTemplatePath = path.resolve(opts?.templateDir ?? "/template");
 	const baseDestPath = opts?.destDir ? path.resolve(opts.destDir) : process.cwd();
+	const templateData = opts?.data ?? {};
 
-	const initialContext: DirectoryContext = {
-		data: opts?.data ?? {},
-		entries: [],
-		templatePath: baseTemplatePath,
-		destPath: baseDestPath,
-	} as const;
-
-	async function generateFile(from: string, to: string, ctx: DirectoryContext) {
-		const templateData = ctx.data;
+	async function generateFile(from: string, to: string) {
 		const destPathInfo = path.parse(to);
 
 		// ensure the dest exists
@@ -76,14 +65,8 @@ export async function poopgen(opts?: PoopgenOptions) {
 		if (from.endsWith(".ejs")) {
 			const template = await readFile(from);
 
-			// render the ejs template with ctx
-			let content;
-
-			try {
-				content = ejs.render(template, templateData);
-			} catch (err) {
-				throw new PoopgenError("Failed to render ejs template", err);
-			}
+			// render the ejs template with the template data
+			const content = ejs.render(template, templateData);
 
 			// strip the .ejs extension from the file name
 			const orignalFileName = to.substring(0, to.length - 4);
@@ -138,13 +121,13 @@ export async function poopgen(opts?: PoopgenOptions) {
 				}
 			}
 
-			await processDirectory(templatePath, destPath, ctx);
+			await processDirectory(templatePath, destPath);
 		} else {
-			await generateFile(templatePath, destPath, ctx);
+			await generateFile(templatePath, destPath);
 		}
 	}
 
-	async function processDirectory(templatePath: string, destPath: string, ctx: DirectoryContext) {
+	async function processDirectory(templatePath: string, destPath: string) {
 		const entries = await fs.readdir(templatePath);
 		const poopfile = entries.find((entry) => entry === poopfileName);
 
@@ -154,7 +137,7 @@ export async function poopgen(opts?: PoopgenOptions) {
 
 		// create a new context for this directory
 		const dirCtx: DirectoryContext = {
-			data: ctx.data,
+			data: templateData,
 			entries: remainingEntries,
 			templatePath: templatePath,
 			destPath: destPath,
@@ -199,5 +182,5 @@ export async function poopgen(opts?: PoopgenOptions) {
 		}
 	}
 
-	await processDirectory(baseTemplatePath, baseDestPath, initialContext);
+	await processDirectory(baseTemplatePath, baseDestPath);
 }

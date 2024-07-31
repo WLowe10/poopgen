@@ -17,18 +17,17 @@ export const supportedPackageManagers = ["npm", "yarn", "pnpm"] as const;
 
 export type SupportedPackageManager = (typeof supportedPackageManagers)[number];
 
-// todo make sure this is perfect
-// export function parseProjectName(name: string, ctx: DirectoryContext) {
-// 	const projectDir = path.join(ctx.destPath, name);
-// 	const projectName = path.basename(projectDir);
-// 	const packageName = toValidNodePackageName(projectName);
+export function parseProjectName(name: string, ctx: DirectoryContext) {
+	const projectDir = path.join(ctx.destPath, name);
+	const projectName = path.basename(projectDir);
+	const packageName = toValidNodePackageName(projectName);
 
-// 	return {
-// 		dir: projectDir,
-// 		name: projectName,
-// 		packageName
-// 	};
-// }
+	return {
+		dir: projectDir,
+		name: projectName,
+		packageName,
+	};
+}
 
 /**
  * Gets the current node package manager. Defaults to npm
