@@ -42,14 +42,16 @@ async function loadPoopModule(path: string): Promise<PoopModule> {
 	}
 }
 
-export type PoopgenOptions = {
-	templateDir?: string;
-	data?: TemplateData;
-	destDir?: string;
-	jsonSpace?: string | number;
-};
+export declare namespace poopgen {
+	type Options = {
+		templateDir?: string;
+		data?: TemplateData;
+		destDir?: string;
+		jsonSpace?: string | number;
+	};
+}
 
-export async function poopgen(opts?: PoopgenOptions) {
+export async function poopgen(opts?: poopgen.Options) {
 	const jsonSpace = opts?.jsonSpace ?? "\t";
 	const baseTemplatePath = path.resolve(opts?.templateDir ?? "/template");
 	const baseDestPath = opts?.destDir ? path.resolve(opts.destDir) : process.cwd();

@@ -19,6 +19,8 @@ export async function dirIsInsideGitRepo(dir: string, opts?: Options) {
 			stdout: "ignore",
 			...opts,
 		});
+
+		return true;
 	} catch {
 		return false;
 	}
