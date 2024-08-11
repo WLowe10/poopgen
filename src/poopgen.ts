@@ -2,16 +2,14 @@ import path from "path";
 import fs from "fs/promises";
 import ejs from "ejs";
 
-// todo could there be better err handling?
-
 export type TemplateData = Record<string, any>;
 
-export interface DirectoryContext {
+export type DirectoryContext = {
 	data: TemplateData;
 	templatePath: string;
 	destPath: string;
 	entries: string[];
-}
+};
 
 export type BeforeFn = (
 	ctx: DirectoryContext,
