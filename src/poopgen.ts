@@ -6,17 +6,15 @@ export type TemplateData = Record<string, any>;
 
 export type FileEntry = {
 	type: "file";
+	path: string;
 	content: string;
-	from: string;
-	to: string;
-	isTemplate: boolean;
+	isTemplate?: boolean;
 };
 
 export type DirectoryEntry = {
 	type: "directory";
+	path: string;
 	content: Entry[];
-	from: string;
-	to: string;
 	poopfile?: string;
 };
 
@@ -61,19 +59,14 @@ export class PoopgenError extends Error {
 	}
 }
 
-export async function parseDirectory(
-	templatePath: string,
-	destPath: string
-): Promise<DirectoryEntry> {
+export async function parseDirectory(templatePath: string): Promise<DirectoryEntry> {
 	const entities = await fs.readdir(templatePath, { withFileTypes: true });
 	const poopfileIdx = entities.findIndex((e) => e.isFile() && e.name === "_poop.js");
 
 	let poopfile;
 
 	if (poopfileIdx > -1) {
-		const poopfileEntity = entities[poopfileIdx];
-
-		poopfile = path.join(templatePath, poopfileEntity.name);
+		poopfile = path.join(templatePath, "_poop.js");
 
 		// remove the poopfile from the entities so we don't accidentally generate it
 		entities.splice(poopfileIdx, 1);
@@ -82,37 +75,33 @@ export async function parseDirectory(
 	const content: Entry[] = [];
 
 	for (const entity of entities) {
+		let entityName = entity.name;
+
 		const entityPath = path.join(templatePath, entity.name);
 
-		let entityDestPath;
-
-		if (entity.name.startsWith("[") && entity.name.endsWith("]")) {
+		if (entityName.startsWith("[") && entityName.endsWith("]")) {
 			// this entity is escaped, remove the brackets from the dest path
-			entityDestPath = path.join(destPath, entity.name.slice(1, -1));
-		} else {
-			entityDestPath = path.join(destPath, entity.name);
+			entity.name.slice(1, -1);
 		}
 
 		if (entity.isDirectory()) {
-			content.push(await parseDirectory(entityPath, entityDestPath));
+			content.push(await parseDirectory(entityPath));
 		} else {
 			if (entity.name.endsWith(".ejs")) {
 				// remove the .ejs from the file extension
-				entityDestPath = entityDestPath.substring(0, entityDestPath.length - 4);
+				entityName = entityName.substring(0, entityName.length - 4);
 
-				entityDestPath = content.push({
+				content.push({
 					type: "file",
 					content: await fs.readFile(entityPath, "utf8"),
-					from: entityPath,
-					to: entityDestPath,
+					path: entityName,
 					isTemplate: true,
 				});
 			} else {
 				content.push({
 					type: "file",
 					content: await fs.readFile(entityPath, "utf8"),
-					from: entityPath,
-					to: entityDestPath,
+					path: entityName,
 					isTemplate: false,
 				});
 			}
@@ -121,14 +110,13 @@ export async function parseDirectory(
 
 	return {
 		type: "directory",
-		from: templatePath,
-		to: destPath,
+		path: "",
 		content,
 		poopfile,
 	};
 }
 
-async function processDirectoryEntry(dir: DirectoryEntry, data: TemplateData) {
+async function processDirectoryEntry(dir: DirectoryEntry, data: TemplateData, destPath: string) {
 	let poopModule;
 
 	if (dir.poopfile) {
@@ -143,16 +131,18 @@ async function processDirectoryEntry(dir: DirectoryEntry, data: TemplateData) {
 		}
 	}
 
+	const entityDestPath = path.resolve(destPath, dir.path);
+
 	if (dir.content.length) {
 		// ensure that the directory exists before generating the files
-		await fs.mkdir(dir.to, { recursive: true });
+		await fs.mkdir(entityDestPath, { recursive: true });
 
 		// process the non poopfile files
 		for (const entry of dir.content) {
 			if (entry.type === "directory") {
-				await processDirectoryEntry(entry, data);
+				await processDirectoryEntry(entry, data, entityDestPath);
 			} else {
-				await processFileEntry(entry, data);
+				await processFileEntry(entry, data, entityDestPath);
 			}
 		}
 	}
@@ -166,16 +156,17 @@ async function processDirectoryEntry(dir: DirectoryEntry, data: TemplateData) {
 	}
 }
 
-async function processFileEntry(entry: FileEntry, data: TemplateData) {
-	let content = entry.content;
+async function processFileEntry(file: FileEntry, data: TemplateData, destPath: string) {
+	const entityDestPath = path.resolve(destPath, file.path);
 
-	// if the file ends with .ejs, render the template
-	if (entry.isTemplate) {
-		content = ejs.render(entry.content, data);
+	let content = file.content;
+
+	if (file.isTemplate) {
+		// if the file is a template, render it
+		content = ejs.render(file.content, data);
 	}
 
-	// write the file stripped of the .ejs extension
-	await fs.writeFile(entry.to, content);
+	await fs.writeFile(entityDestPath, content);
 }
 
 export async function poopgen(opts?: poopgen.Options) {
@@ -183,7 +174,7 @@ export async function poopgen(opts?: poopgen.Options) {
 	const baseDestPath = opts?.destDir ? path.resolve(opts.destDir) : process.cwd();
 	const data = opts?.data ?? {};
 
-	const template = await parseDirectory(baseTemplatePath, baseDestPath);
+	const template = await parseDirectory(baseTemplatePath);
 
-	await processDirectoryEntry(template, data);
+	await processDirectoryEntry(template, data, baseDestPath);
 }
