@@ -4,33 +4,37 @@ import ejs from "ejs";
 
 export type TemplateData = Record<string, any>;
 
+export type FileEntry = {
+	type: "file";
+	content: string;
+	from: string;
+	to: string;
+	isTemplate: boolean;
+};
+
+export type DirectoryEntry = {
+	type: "directory";
+	content: Entry[];
+	from: string;
+	to: string;
+	poopfile?: string;
+};
+
+export type Entry = FileEntry | DirectoryEntry;
+
 export type DirectoryContext = {
 	data: TemplateData;
 	templatePath: string;
-	destPath: string;
-	entries: string[];
+	entries: Entry[];
 };
 
-export type BeforeFn = (
-	ctx: DirectoryContext,
-	actions: {
-		skip: () => void;
-	}
-) => void;
-
-export type AfterFn = (ctx: DirectoryContext) => void;
+export type BeforeFn = (ctx: { entry: DirectoryEntry; data: TemplateData }) => void;
+export type AfterFn = (ctx: { entry: DirectoryEntry; data: TemplateData }) => void;
 
 export interface PoopModule {
 	before: BeforeFn;
 	after: AfterFn;
 }
-
-const poopfileName = "_poop.js";
-
-const readFile = (path: string) => fs.readFile(path, "utf8");
-
-const prettifyJSONString = (jsonStr: string, space: string | number) =>
-	JSON.stringify(JSON.parse(jsonStr), null, space);
 
 async function loadPoopModule(path: string): Promise<PoopModule> {
 	try {
@@ -49,138 +53,137 @@ export declare namespace poopgen {
 	};
 }
 
-export async function poopgen(opts?: poopgen.Options) {
-	const jsonSpace = opts?.jsonSpace ?? "\t";
-	const baseTemplatePath = path.resolve(opts?.templateDir ?? "/template");
-	const baseDestPath = opts?.destDir ? path.resolve(opts.destDir) : process.cwd();
-	const templateData = opts?.data ?? {};
+export class PoopgenError extends Error {
+	constructor(message: string, cause?: Error) {
+		super(message);
 
-	async function generateFile(from: string, to: string) {
-		const destPathInfo = path.parse(to);
+		this.cause = cause;
+	}
+}
 
-		// ensure the dest exists
-		await fs.mkdir(destPathInfo.dir, { recursive: true });
+export async function parseDirectory(
+	templatePath: string,
+	destPath: string
+): Promise<DirectoryEntry> {
+	const entities = await fs.readdir(templatePath, { withFileTypes: true });
+	const poopfileIdx = entities.findIndex((e) => e.isFile() && e.name === "_poop.js");
 
-		// if the file ends with .ejs, we know it is a templated file to generate
-		if (from.endsWith(".ejs")) {
-			const template = await readFile(from);
+	let poopfile;
 
-			// render the ejs template with the template data
-			const content = ejs.render(template, templateData);
+	if (poopfileIdx > -1) {
+		const poopfileEntity = entities[poopfileIdx];
 
-			// strip the .ejs extension from the file name
-			const orignalFileName = to.substring(0, to.length - 4);
+		poopfile = path.join(templatePath, poopfileEntity.name);
 
-			if (orignalFileName.endsWith(".json")) {
-				// we will automatically prettify templated json files
-				await fs.writeFile(orignalFileName, prettifyJSONString(content, jsonSpace));
+		// remove the poopfile from the entities so we don't accidentally generate it
+		entities.splice(poopfileIdx, 1);
+	}
+
+	const content: Entry[] = [];
+
+	for (const entity of entities) {
+		const entityPath = path.join(templatePath, entity.name);
+
+		let entityDestPath;
+
+		if (entity.name.startsWith("[") && entity.name.endsWith("]")) {
+			// this entity is escaped, remove the brackets from the dest path
+			entityDestPath = path.join(destPath, entity.name.slice(1, -1));
+		} else {
+			entityDestPath = path.join(destPath, entity.name);
+		}
+
+		if (entity.isDirectory()) {
+			content.push(await parseDirectory(entityPath, entityDestPath));
+		} else {
+			if (entity.name.endsWith(".ejs")) {
+				// remove the .ejs from the file extension
+				entityDestPath = entityDestPath.substring(0, entityDestPath.length - 4);
+
+				entityDestPath = content.push({
+					type: "file",
+					content: await fs.readFile(entityPath, "utf8"),
+					from: entityPath,
+					to: entityDestPath,
+					isTemplate: true,
+				});
 			} else {
-				await fs.writeFile(orignalFileName, content);
+				content.push({
+					type: "file",
+					content: await fs.readFile(entityPath, "utf8"),
+					from: entityPath,
+					to: entityDestPath,
+					isTemplate: false,
+				});
 			}
-		} else {
-			// no templating needed, just copy the file to the destination
-			await fs.copyFile(from, to);
 		}
 	}
 
-	async function processEntry(entryPath: string, ctx: DirectoryContext) {
-		const templatePath = path.join(ctx.templatePath, entryPath);
-		const stats = await fs.stat(templatePath);
+	return {
+		type: "directory",
+		from: templatePath,
+		to: destPath,
+		content,
+		poopfile,
+	};
+}
 
-		let destPath = path.join(ctx.destPath, entryPath);
-		let isEscaped = false;
+async function processDirectoryEntry(dir: DirectoryEntry, data: TemplateData) {
+	let poopModule;
 
-		// check if name is escaped
-		if (entryPath.startsWith("[") && entryPath.endsWith("]")) {
-			// remove the first and last char ("[","]") from the name
-			destPath = path.join(ctx.destPath, entryPath.slice(1, -1));
-			isEscaped = true;
-		}
+	if (dir.poopfile) {
+		poopModule = await loadPoopModule(dir.poopfile);
 
-		if (stats.isDirectory()) {
-			if (
-				!isEscaped &&
-				(entryPath.startsWith("_") ||
-					entryPath.startsWith("+") ||
-					entryPath.startsWith("-"))
-			) {
-				// remove the pathless directory path
-				destPath = path.dirname(destPath);
-
-				// poopgen logical sugars
-				if (entryPath.startsWith("+") || entryPath.startsWith("-")) {
-					const ctxName = entryPath.slice(1);
-					const ctxVal = ctx.data[ctxName];
-
-					if (
-						(entryPath.startsWith("+") && !ctxVal) ||
-						(entryPath.startsWith("-") && !!ctxVal)
-					) {
-						return;
-					}
-				}
-			}
-
-			await processDirectory(templatePath, destPath);
-		} else {
-			await generateFile(templatePath, destPath);
+		// poop lifecycle before
+		if (typeof poopModule.before === "function") {
+			await poopModule.before({
+				data,
+				entry: dir,
+			});
 		}
 	}
 
-	async function processDirectory(templatePath: string, destPath: string) {
-		const entries = await fs.readdir(templatePath);
-		const poopfile = entries.find((entry) => entry === poopfileName);
-
-		const remainingEntries = poopfile
-			? entries.filter((entry) => entry !== poopfileName)
-			: entries;
-
-		// create a new context for this directory
-		const dirCtx: DirectoryContext = {
-			data: templateData,
-			entries: remainingEntries,
-			templatePath: templatePath,
-			destPath: destPath,
-		};
-
-		let poopModule: PoopModule | undefined;
-
-		if (poopfile) {
-			const poopfilePath = path.join(dirCtx.templatePath, poopfile);
-			const stats = await fs.stat(poopfilePath);
-
-			if (stats.isFile()) {
-				let skipped = false;
-
-				poopModule = await loadPoopModule(poopfilePath);
-
-				// poop lifecycle before
-				if (typeof poopModule.before === "function") {
-					await poopModule.before(dirCtx, {
-						skip: () => {
-							skipped = true;
-						},
-					});
-				}
-
-				/* poopfiles are able to cancel generation by calling the "skip" function.
-				this effectively skips the directory the poopfile is located in */
-				if (skipped) {
-					return;
-				}
-			}
-		}
+	if (dir.content.length) {
+		// ensure that the directory exists before generating the files
+		await fs.mkdir(dir.to, { recursive: true });
 
 		// process the non poopfile files
-		for (const entry of dirCtx.entries) {
-			await processEntry(entry, dirCtx);
-		}
-
-		// poop lifecycle after
-		if (poopModule && typeof poopModule.after === "function") {
-			await poopModule.after(dirCtx);
+		for (const entry of dir.content) {
+			if (entry.type === "directory") {
+				await processDirectoryEntry(entry, data);
+			} else {
+				await processFileEntry(entry, data);
+			}
 		}
 	}
 
-	await processDirectory(baseTemplatePath, baseDestPath);
+	// poop lifecycle after
+	if (poopModule && typeof poopModule.after === "function") {
+		await poopModule.after({
+			data,
+			entry: dir,
+		});
+	}
+}
+
+async function processFileEntry(entry: FileEntry, data: TemplateData) {
+	let content = entry.content;
+
+	// if the file ends with .ejs, render the template
+	if (entry.isTemplate) {
+		content = ejs.render(entry.content, data);
+	}
+
+	// write the file stripped of the .ejs extension
+	await fs.writeFile(entry.to, content);
+}
+
+export async function poopgen(opts?: poopgen.Options) {
+	const baseTemplatePath = path.resolve(opts?.templateDir ?? "/template");
+	const baseDestPath = opts?.destDir ? path.resolve(opts.destDir) : process.cwd();
+	const data = opts?.data ?? {};
+
+	const template = await parseDirectory(baseTemplatePath, baseDestPath);
+
+	await processDirectoryEntry(template, data);
 }

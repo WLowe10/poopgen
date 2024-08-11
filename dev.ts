@@ -3,7 +3,7 @@ import chalk from "chalk";
 
 try {
 	await poopgen({
-		templateDir: "./examples/templates/multiple-templates",
+		templateDir: "./examples/templates/basic-poopfile",
 		destDir: "./dest",
 	});
 } catch (err) {
