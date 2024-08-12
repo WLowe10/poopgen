@@ -31,7 +31,6 @@ export declare namespace poopgen {
 		template?: string;
 		dest?: string;
 		data?: TemplateData;
-		jsonSpace?: string | number;
 	};
 }
 
