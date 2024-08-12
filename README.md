@@ -1,6 +1,6 @@
 # poopgen
 
-> Simple and flexible project generator
+> Simple and flexible project generator.
 
 ## Why is it named poopgen?
 
@@ -25,9 +25,9 @@ import { poopgen } from "poopgen";
 
 await poopgen({
 	// tell poopgen where your template lives
-	templateDir: "./template",
+	template: "./template",
 	// tell poopgen where to build your project to
-	destDir: "./dest",
+	dest: "./dest",
 });
 ```
 
@@ -47,7 +47,7 @@ You may be wondering: `what is a poopfile?`
 
 ### poopfiles
 
-A poopfile is a file named `_poop.js` that allows you to embed logic during generating a project. A poopfile is a simple JavaScript module that exports two functions.
+A poopfile is a file named `_poop.js` inside of a director that allows you to modulate your generator during generating a project. A poopfile is a simple JavaScript module that exports two functions.
 
 ```javascript
 export function before(ctx) {

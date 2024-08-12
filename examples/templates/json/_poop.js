@@ -1,6 +1,6 @@
 /** @type{import("poopgen").BeforeFn}  */
 export function before(ctx) {
-	const packageJSONEntry = ctx.entry.content.find(entry => entry.type === "file" && entry.from.endsWith("package.json"));
+	const packageJSONEntry = ctx.dir.entries.find(entry => entry.type === "file" && entry.path === "package.json");
 
 	if (packageJSONEntry) {
 		const pkg = JSON.parse(packageJSONEntry.content);

@@ -1,12 +1,12 @@
 {
-    "name": "<%= packageName %>",
+    "name": "",
     "type": "module",
     "private": true,
     "scripts": {
         "dev": "tsx watch ./src/main.ts"
     },
     "dependencies": {
-        "express": "^4.19.2"
+        "fastify": "^4.28.1"
     },
     "devDependencies": {
 		"tsx": "^4.16.2",

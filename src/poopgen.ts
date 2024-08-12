@@ -1,33 +1,17 @@
 import path from "path";
 import fs from "fs/promises";
 import ejs from "ejs";
+import { parseDirectory, type DirectoryEntry, type FileEntry } from "./parse";
 
 export type TemplateData = Record<string, any>;
 
-export type FileEntry = {
-	type: "file";
-	path: string;
-	content: string;
-	isTemplate?: boolean;
-};
-
-export type DirectoryEntry = {
-	type: "directory";
-	path: string;
-	content: Entry[];
-	poopfile?: string;
-};
-
-export type Entry = FileEntry | DirectoryEntry;
-
 export type DirectoryContext = {
+	dir: DirectoryEntry;
 	data: TemplateData;
-	templatePath: string;
-	entries: Entry[];
 };
 
-export type BeforeFn = (ctx: { entry: DirectoryEntry; data: TemplateData }) => void;
-export type AfterFn = (ctx: { entry: DirectoryEntry; data: TemplateData }) => void;
+export type BeforeFn = (ctx: DirectoryContext) => void;
+export type AfterFn = (ctx: DirectoryContext) => void;
 
 export interface PoopModule {
 	before: BeforeFn;
@@ -44,9 +28,9 @@ async function loadPoopModule(path: string): Promise<PoopModule> {
 
 export declare namespace poopgen {
 	type Options = {
-		templateDir?: string;
+		template?: string;
+		dest?: string;
 		data?: TemplateData;
-		destDir?: string;
 		jsonSpace?: string | number;
 	};
 }
@@ -59,122 +43,68 @@ export class PoopgenError extends Error {
 	}
 }
 
-export async function parseDirectory(templatePath: string): Promise<DirectoryEntry> {
-	const entities = await fs.readdir(templatePath, { withFileTypes: true });
-	const poopfileIdx = entities.findIndex((e) => e.isFile() && e.name === "_poop.js");
+async function processDirectoryEntry(dir: DirectoryEntry, data: TemplateData, parentDest: string) {
+	// make the dir path absolute before entering the lifecycle
+	dir.path = path.join(parentDest, dir.path);
 
-	let poopfile;
-
-	if (poopfileIdx > -1) {
-		poopfile = path.join(templatePath, "_poop.js");
-
-		// remove the poopfile from the entities so we don't accidentally generate it
-		entities.splice(poopfileIdx, 1);
-	}
-
-	const content: Entry[] = [];
-
-	for (const entity of entities) {
-		let entityName = entity.name;
-
-		const entityPath = path.join(templatePath, entity.name);
-
-		if (entityName.startsWith("[") && entityName.endsWith("]")) {
-			// this entity is escaped, remove the brackets from the dest path
-			entity.name.slice(1, -1);
-		}
-
-		if (entity.isDirectory()) {
-			content.push(await parseDirectory(entityPath));
-		} else {
-			if (entity.name.endsWith(".ejs")) {
-				// remove the .ejs from the file extension
-				entityName = entityName.substring(0, entityName.length - 4);
-
-				content.push({
-					type: "file",
-					content: await fs.readFile(entityPath, "utf8"),
-					path: entityName,
-					isTemplate: true,
-				});
-			} else {
-				content.push({
-					type: "file",
-					content: await fs.readFile(entityPath, "utf8"),
-					path: entityName,
-					isTemplate: false,
-				});
-			}
-		}
-	}
-
-	return {
-		type: "directory",
-		path: "",
-		content,
-		poopfile,
+	const ctx: DirectoryContext = {
+		data,
+		dir,
 	};
-}
 
-async function processDirectoryEntry(dir: DirectoryEntry, data: TemplateData, destPath: string) {
 	let poopModule;
 
-	if (dir.poopfile) {
-		poopModule = await loadPoopModule(dir.poopfile);
+	if (ctx.dir.poopfile) {
+		poopModule = await loadPoopModule(ctx.dir.poopfile);
 
 		// poop lifecycle before
 		if (typeof poopModule.before === "function") {
-			await poopModule.before({
-				data,
-				entry: dir,
-			});
+			await poopModule.before(ctx);
 		}
 	}
 
-	const entityDestPath = path.resolve(destPath, dir.path);
-
-	if (dir.content.length) {
+	if (ctx.dir.entries.length) {
 		// ensure that the directory exists before generating the files
-		await fs.mkdir(entityDestPath, { recursive: true });
+		await fs.mkdir(ctx.dir.path, { recursive: true });
 
-		// process the non poopfile files
-		for (const entry of dir.content) {
+		// process the contents of the directory
+		for (const entry of ctx.dir.entries) {
 			if (entry.type === "directory") {
-				await processDirectoryEntry(entry, data, entityDestPath);
+				await processDirectoryEntry(entry, data, ctx.dir.path);
 			} else {
-				await processFileEntry(entry, data, entityDestPath);
+				await processFileEntry(entry, data, ctx.dir.path);
 			}
 		}
 	}
 
 	// poop lifecycle after
 	if (poopModule && typeof poopModule.after === "function") {
-		await poopModule.after({
-			data,
-			entry: dir,
-		});
+		await poopModule.after(ctx);
 	}
 }
 
-async function processFileEntry(file: FileEntry, data: TemplateData, destPath: string) {
-	const entityDestPath = path.resolve(destPath, file.path);
-
+async function processFileEntry(file: FileEntry, data: TemplateData, parentDest: string) {
 	let content = file.content;
 
+	// if the file is a template, render it
 	if (file.isTemplate) {
-		// if the file is a template, render it
 		content = ejs.render(file.content, data);
 	}
 
-	await fs.writeFile(entityDestPath, content);
+	await fs.writeFile(path.resolve(parentDest, file.path), content);
 }
 
 export async function poopgen(opts?: poopgen.Options) {
-	const baseTemplatePath = path.resolve(opts?.templateDir ?? "/template");
-	const baseDestPath = opts?.destDir ? path.resolve(opts.destDir) : process.cwd();
+	const baseTemplatePath = path.resolve(opts?.template ?? "/template");
+	const baseDestPath = opts?.dest ? path.resolve(opts.dest) : process.cwd();
 	const data = opts?.data ?? {};
 
 	const template = await parseDirectory(baseTemplatePath);
+
+	// strip the name of the root template directory
+	template.path = "";
+
+	// console.log(JSON.stringify(template, null, 2));
 
 	await processDirectoryEntry(template, data, baseDestPath);
 }

@@ -1,3 +1,3 @@
-# Basic
+# Basic 2
 
-This example simply contains a single file "index.ts" with no templating.
+This example shows how to use poopfiles and how to add data for your ejs templates.

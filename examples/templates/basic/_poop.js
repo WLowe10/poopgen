@@ -1,7 +1,5 @@
 /** @type{import("poopgen").BeforeFn}  */
-export function before(ctx) {
-	console.log("began generating!");
-
+export async function before(ctx) {
 	ctx.data.name = "poopgen";
 }
 

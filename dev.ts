@@ -3,8 +3,8 @@ import chalk from "chalk";
 
 try {
 	await poopgen({
-		templateDir: "./examples/templates/basic-poopfile",
-		destDir: "./dest",
+		template: "./examples/templates/multiple-templates",
+		dest: "./dest",
 	});
 } catch (err) {
 	console.log(chalk.red("An unknown error has occurred"));
