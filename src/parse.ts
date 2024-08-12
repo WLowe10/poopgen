@@ -38,8 +38,8 @@ export async function parseDirectory(templatePath: string): Promise<DirectoryEnt
 		const entityPath = path.join(templatePath, entity.name);
 
 		if (entityName.startsWith("[") && entityName.endsWith("]")) {
-			// this entity is escaped, remove the brackets from the dest path
-			entity.name.slice(1, -1);
+			// this entity is escaped, remove the brackets from the path
+			entityName = entityName.slice(1, -1);
 		}
 
 		if (entity.isDirectory()) {
