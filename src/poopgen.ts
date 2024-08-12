@@ -44,13 +44,13 @@ export class PoopgenError extends Error {
 }
 
 async function processDirectoryEntry(dir: DirectoryEntry, data: TemplateData, parentDest: string) {
-	// make the dir path absolute before entering the lifecycle
-	dir.path = path.join(parentDest, dir.path);
-
 	const ctx: DirectoryContext = {
 		data,
 		dir,
 	};
+
+	// make the dir path absolute before entering the lifecycle
+	ctx.dir.path = path.resolve(parentDest, ctx.dir.path);
 
 	let poopModule;
 
@@ -60,6 +60,9 @@ async function processDirectoryEntry(dir: DirectoryEntry, data: TemplateData, pa
 		// poop lifecycle before
 		if (typeof poopModule.before === "function") {
 			await poopModule.before(ctx);
+
+			// ensure we resolve the path again if the user changes the path in the lifecycle
+			ctx.dir.path = path.resolve(parentDest, ctx.dir.path);
 		}
 	}
 
