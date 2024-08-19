@@ -10,8 +10,11 @@ export type DirectoryContext = {
 	data: TemplateData;
 };
 
-export type BeforeFn = (ctx: DirectoryContext) => void;
-export type AfterFn = (ctx: DirectoryContext) => void;
+export type BeforeFnArgs = DirectoryContext;
+export type AfterFnArgs = DirectoryContext;
+
+export type BeforeFn = (args: BeforeFnArgs) => void;
+export type AfterFn = (args: AfterFnArgs) => void;
 
 export interface PoopModule {
 	before: BeforeFn;
@@ -21,8 +24,8 @@ export interface PoopModule {
 async function loadPoopModule(path: string): Promise<PoopModule> {
 	try {
 		return await import(path);
-	} catch (err) {
-		throw new Error(`Failed to import poopfile at ${path}`);
+	} catch (err: any) {
+		throw new PoopgenError(`Failed to import poopfile at ${path}`, err);
 	}
 }
 
