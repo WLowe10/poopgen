@@ -5,10 +5,10 @@ import { parseDirectory, type DirectoryEntry, type FileEntry } from "./parse";
 
 export type TemplateData = Record<string, any>;
 
-export type DirectoryContext = {
+export interface DirectoryContext {
 	dir: DirectoryEntry;
 	data: TemplateData;
-};
+}
 
 export type BeforeFnArgs = DirectoryContext;
 export type AfterFnArgs = DirectoryContext;
@@ -30,11 +30,11 @@ async function loadPoopModule(path: string): Promise<PoopModule> {
 }
 
 export declare namespace poopgen {
-	type Options = {
+	interface Options {
 		template?: string;
 		dest?: string;
 		data?: TemplateData;
-	};
+	}
 }
 
 export class PoopgenError extends Error {
@@ -62,9 +62,6 @@ async function processDirectoryEntry(dir: DirectoryEntry, data: TemplateData, pa
 		// poop lifecycle before
 		if (typeof poopModule.before === "function") {
 			await poopModule.before(ctx);
-
-			// ensure we resolve the path again if the user changes the path in the lifecycle
-			ctx.dir.path = path.resolve(parentDest, ctx.dir.path);
 		}
 	}
 

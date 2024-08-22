@@ -5,7 +5,7 @@ of poopgen's before and after lifecycle functions.
 
 import {
 	parseProjectName
-} from "poopgen";
+} from "poopgen/utils";
 import * as p from "@clack/prompts";
 
 /** @type{import("poopgen").BeforeFn}  */

@@ -1,6 +1,6 @@
 {
 	"name": "poopgen",
-	"version": "0.2.3",
+	"version": "0.2.4",
 	"description": "Simple and flexible project generator",
 	"license": "MIT",
 	"author": {
@@ -47,7 +47,7 @@
 		"README.md"
 	],
 	"scripts": {
-		"build": "pnpm clean:dist && tsup src/index.ts src/utils/index.ts --dts --format esm,cjs",
+		"build": "tsup",
 		"format": "prettier --write .",
 		"publish-package": "pnpm build && pnpm publish",
 		"clean": "pnpm clean:dist && pnpm clean:modules",
