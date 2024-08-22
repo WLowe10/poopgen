@@ -40,7 +40,7 @@ await poopgen({
 
 ## A Basic Example
 
-_This should be all you need to learn how to use poopgen. It's that easy to use!_
+> This should be all you need to learn how to use poopgen. It's that easy to use!
 
 A poopgen template is a folder that contains three things:
 
@@ -60,7 +60,7 @@ template/
 
 ```
 
-### src/cli.ts
+### `src/cli.ts`
 
 ```ts
 import { poopgen } from "poopgen";
@@ -73,13 +73,13 @@ await poopgen({
 });
 ```
 
-### template/\_poop.js
+### `template/\_poop.js`
 
 This is what poopgen recognizes as a `poopfile`. A poopfile is any simple JavaScript module named `_poop.js` that exports functions named `before` and `after`. (You can export `before`, `after`, or both!)
 
 _This allows you to embed logic and hook into the poopgen lifecycle directly within your template!_
 
-Poopfiles can live in any directory inside of your template.
+Poopfiles can live in any directory inside of your template. _They are not included in your output._
 
 The `before` function is executed before poopgen generates the directory
 The `after` function is executed after poopgen generates the directory
@@ -114,7 +114,7 @@ export function after(ctx) {
 }
 ```
 
-### template/index.ts.ejs
+### `template/index.ts.ejs`
 
 ```js
 /* 
@@ -128,12 +128,30 @@ Remember how we defined ctx.data.name in this directory's poopfile? ('_poop.js')
 console.log("Hello world from <%- name %>!");
 ```
 
-### template/README.md
+### `template/README.md`
 
 ```md
 # Example
 
 This file does not end in '.ejs', it will be copied to '/dest/README.md'!
+```
+
+### Time to Generate
+
+Our template is ready to be generated! After running ./src/cli.ts, poopgen should have pooped a directory called `dest` in your working directory.
+
+```
+dest/
+├─ index.ts
+├─ README.md
+```
+
+### `dest/index.ts`
+
+> See, I told you that poopgen would remove the .ejs extension!
+
+```ts
+console.log("Hello world from poopgen!");
 ```
 
 ## Extra
@@ -143,19 +161,21 @@ This file does not end in '.ejs', it will be copied to '/dest/README.md'!
 Poopgen exports a function named `getCtx` that allows you to access the current context inside of a poopfile.
 
 ```js
-// so this...
 import { getCtx } from "poopgen";
 
+// so this...
 export function before() {
 	const ctx = getCtx();
 
 	ctx.data.message = "poopgen is awesome!";
 }
 
-// does the same as
+// achieves the same as this
 export function before(ctx) {
 	ctx.data.message = "poopgen is awesome!";
 }
+
+// use getCtx whenever it makes sense to you!
 ```
 
 Context is useful if you want to create helper functions, but don't necessarily want to have to pass the context to all of them.
