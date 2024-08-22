@@ -10,3 +10,8 @@ await poopgen({
 	destDir: "./dest",
 });
 ```
+
+- [Basic](/basic)
+- [Escaping](/escaping)
+- [JSON](/json)
+- [Multiple Templates](/multiple-templates)
