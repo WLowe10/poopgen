@@ -1,7 +1,8 @@
-import path from "path";
-import fs from "fs/promises";
+import path from "node:path";
+import fs from "node:fs/promises";
 import ejs from "ejs";
 import { parseDirectory, type DirectoryEntry, type FileEntry } from "./parse";
+import { context } from "./context";
 
 export type TemplateData = Record<string, any>;
 
@@ -54,14 +55,14 @@ async function processDirectoryEntry(dir: DirectoryEntry, data: TemplateData, pa
 	// make the dir path absolute before entering the lifecycle
 	ctx.dir.path = path.resolve(parentDest, ctx.dir.path);
 
-	let poopModule;
+	let poopModule: PoopModule | undefined;
 
 	if (ctx.dir.poopfile) {
 		poopModule = await loadPoopModule(ctx.dir.poopfile);
 
 		// poop lifecycle before
 		if (typeof poopModule.before === "function") {
-			await poopModule.before(ctx);
+			await context.run(ctx, () => poopModule!.before(ctx));
 		}
 	}
 
@@ -81,7 +82,7 @@ async function processDirectoryEntry(dir: DirectoryEntry, data: TemplateData, pa
 
 	// poop lifecycle after
 	if (poopModule && typeof poopModule.after === "function") {
-		await poopModule.after(ctx);
+		await context.run(ctx, () => poopModule!.after(ctx));
 	}
 }
 

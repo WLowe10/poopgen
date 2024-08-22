@@ -1,6 +1,6 @@
 /** @type{import("poopgen").BeforeFn}  */
 export async function before(ctx) {
-	ctx.data.name = "poopgen";
+	ctx.data.name = "poopgen ctx!"
 }
 
 /** @type{import("poopgen").AfterFn}  */
