@@ -2,14 +2,7 @@ import path from "node:path";
 import fs from "node:fs/promises";
 import ejs from "ejs";
 import { parseDirectory, type DirectoryEntry, type FileEntry } from "./parse";
-
-export class PoopgenError extends Error {
-	constructor(message: string, cause?: Error) {
-		super(message);
-
-		this.cause = cause;
-	}
-}
+import { PoopgenError } from "./error";
 
 export type TemplateData = Record<string, any>;
 
@@ -29,21 +22,32 @@ export interface PoopModule {
 	after: AfterFn;
 }
 
-async function loadPoopModule(path: string): Promise<PoopModule> {
-	try {
-		return await import(path);
-	} catch (err: any) {
-		throw new PoopgenError(`Failed to import poopfile at ${path}`, err);
+// process file
+
+async function processFileEntry(file: FileEntry, data: TemplateData, parentDest: string) {
+	let content = file.content;
+
+	// if the file is a template, render it
+	if (file.isTemplate) {
+		content = ejs.render(file.content, data);
+	}
+
+	await fs.writeFile(path.resolve(parentDest, file.path), content);
+}
+
+export class PoopfileImportError extends PoopgenError {
+	public path: string;
+
+	constructor(path: string, cause?: unknown) {
+		super(`Failed to import poopfile at ${path}`);
+
+		this.path = path;
+		this.cause = cause;
+		this.name = "PoopfileImportError";
 	}
 }
 
-export declare namespace poopgen {
-	interface Options {
-		template?: string;
-		dest?: string;
-		data?: TemplateData;
-	}
-}
+// process directory
 
 async function processDirectoryEntry(dir: DirectoryEntry, data: TemplateData, parentDest: string) {
 	const ctx: DirectoryContext = {
@@ -57,7 +61,11 @@ async function processDirectoryEntry(dir: DirectoryEntry, data: TemplateData, pa
 	let poopModule: PoopModule | undefined;
 
 	if (ctx.dir.poopfile) {
-		poopModule = await loadPoopModule(ctx.dir.poopfile);
+		try {
+			poopModule = (await import(ctx.dir.poopfile)) as PoopModule;
+		} catch (err: any) {
+			throw new PoopfileImportError(ctx.dir.poopfile);
+		}
 
 		// poop lifecycle before
 		if (typeof poopModule.before === "function") {
@@ -85,26 +93,38 @@ async function processDirectoryEntry(dir: DirectoryEntry, data: TemplateData, pa
 	}
 }
 
-async function processFileEntry(file: FileEntry, data: TemplateData, parentDest: string) {
-	let content = file.content;
+export declare namespace poopgen {
+	interface Options {
+		/**
+		 * The path to the template directory.
+		 *
+		 * Can be relative or absolute.
+		 */
+		templatePath: string;
 
-	// if the file is a template, render it
-	if (file.isTemplate) {
-		content = ejs.render(file.content, data);
+		/**
+		 * The path where the generated template will be written
+		 *
+		 * Can be relative or absolute.
+		 */
+		destPath: string;
+
+		/**
+		 * An object containing data for rendering template files
+		 */
+		data?: TemplateData;
 	}
-
-	await fs.writeFile(path.resolve(parentDest, file.path), content);
 }
 
-export async function poopgen(opts?: poopgen.Options) {
-	const baseTemplatePath = path.resolve(opts?.template ?? "/template");
-	const baseDestPath = opts?.dest ? path.resolve(opts.dest) : process.cwd();
+export async function poopgen(opts: poopgen.Options) {
+	const templatePath = path.resolve(opts.templatePath);
+	const destPath = path.resolve(opts.destPath);
 	const data = opts?.data ?? {};
 
-	const template = await parseDirectory(baseTemplatePath);
+	const template = await parseDirectory(templatePath);
 
 	// strip the name of the root template directory
 	template.path = "";
 
-	await processDirectoryEntry(template, data, baseDestPath);
+	await processDirectoryEntry(template, data, destPath);
 }
