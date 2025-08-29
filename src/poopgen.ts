@@ -4,6 +4,14 @@ import ejs from "ejs";
 import { parseDirectory, type DirectoryEntry, type FileEntry } from "./parse";
 import { context } from "./context";
 
+export class PoopgenError extends Error {
+	constructor(message: string, cause?: Error) {
+		super(message);
+
+		this.cause = cause;
+	}
+}
+
 export type TemplateData = Record<string, any>;
 
 export interface DirectoryContext {
@@ -35,14 +43,6 @@ export declare namespace poopgen {
 		template?: string;
 		dest?: string;
 		data?: TemplateData;
-	}
-}
-
-export class PoopgenError extends Error {
-	constructor(message: string, cause?: Error) {
-		super(message);
-
-		this.cause = cause;
 	}
 }
 
@@ -82,7 +82,7 @@ async function processDirectoryEntry(dir: DirectoryEntry, data: TemplateData, pa
 
 	// poop lifecycle after
 	if (poopModule && typeof poopModule.after === "function") {
-		await context.run(ctx, () => poopModule!.after(ctx));
+		await context.run(ctx, () => poopModule.after(ctx));
 	}
 }
 
@@ -106,8 +106,6 @@ export async function poopgen(opts?: poopgen.Options) {
 
 	// strip the name of the root template directory
 	template.path = "";
-
-	// console.log(JSON.stringify(template, null, 2));
 
 	await processDirectoryEntry(template, data, baseDestPath);
 }
