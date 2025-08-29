@@ -1,5 +1,6 @@
 {
 	"name": "poopgen",
+	"type": "module",
 	"version": "0.3.1",
 	"description": "Simple and flexible project generator",
 	"license": "MIT",
@@ -14,11 +15,7 @@
 		"type": "git",
 		"url": "https://github.com/WLowe10/poopgen"
 	},
-	"type": "module",
 	"sideEffects": false,
-	"main": "./dist/index.cjs",
-	"module": "./dist/index.js",
-	"types": "./dist/index.d.ts",
 	"exports": {
 		".": {
 			"import": {
@@ -50,23 +47,18 @@
 		"build": "tsup",
 		"format": "prettier --write .",
 		"publish-package": "pnpm build && pnpm publish",
+		"typecheck": "tsc --noEmit",
 		"clean": "pnpm clean:dist && pnpm clean:modules",
 		"clean:dist": "rm -rf dist",
-		"clean:modules": "rm -rf node_modules",
-		"type-check": "tsc --noEmit"
+		"clean:modules": "rm -rf node_modules"
 	},
 	"dependencies": {
 		"ejs": "^3.1.10",
 		"execa": "^9.3.0"
 	},
 	"devDependencies": {
-		"@clack/prompts": "^0.7.0",
 		"@types/ejs": "^3.1.5",
-		"@types/fs-extra": "^11.0.4",
 		"@types/node": "^20.14.12",
-		"chalk": "^5.3.0",
-		"fs-extra": "^11.2.0",
-		"ora": "^8.0.1",
 		"prettier": "^3.3.2",
 		"tsup": "^8.1.0",
 		"tsx": "^4.16.2",
