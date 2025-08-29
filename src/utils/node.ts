@@ -12,9 +12,9 @@ export const toValidNodePackageName = (name: string) =>
 		.replace(/^[._]/, "")
 		.replace(/[^a-z\d\-~]+/g, "-");
 
-export const supportedPackageManagers = ["npm", "yarn", "pnpm"] as const;
+export const knownPackageManagers = ["npm", "yarn", "pnpm"] as const;
 
-export type SupportedPackageManager = (typeof supportedPackageManagers)[number];
+export type KnownPackageManager = (typeof knownPackageManagers)[number];
 
 export function parseProjectName(name: string, basePath?: string) {
 	const projectDir = basePath ? path.join(basePath, name) : path.join(process.cwd(), name);
@@ -31,7 +31,7 @@ export function parseProjectName(name: string, basePath?: string) {
 /**
  * Gets the current node package manager. Defaults to npm
  */
-export function getNodePackageManager(): SupportedPackageManager {
+export function getNodePackageManager(): KnownPackageManager {
 	const userAgent = process.env.npm_config_user_agent;
 
 	if (!userAgent) {
@@ -52,14 +52,14 @@ export function getNodePackageManager(): SupportedPackageManager {
 /**
  * Installs node modules. Requires the selected package manager to be installed.
  */
-export async function installNodeModules(packageManager: SupportedPackageManager, opts?: Options) {
+export async function installNodeModules(packageManager: KnownPackageManager, opts?: Options) {
 	const cwd = opts?.cwd ?? process.cwd();
 
-	if (supportedPackageManagers.includes(packageManager)) {
-		return await execa(packageManager, ["install"], {
-			cwd,
-		});
+	if (!knownPackageManagers.includes(packageManager)) {
+		throw new Error("Failed to install modules, unsupported package manager");
 	}
 
-	throw new Error("Failed to install modules, unsupported package manager");
+	await execa(packageManager, ["install"], {
+		cwd,
+	});
 }
