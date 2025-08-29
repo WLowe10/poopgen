@@ -10,10 +10,10 @@ Project generators emit files and I thought poopgen was a fitting name :)
 
 ## Table Of Contents
 
--   [Install](#install)
--   [Usage](#usage)
--   [A Basic Example](#a-basic-example)
--   [More examples](/examples/templates)
+- [Install](#install)
+- [Usage](#usage)
+- [A Basic Example](#a-basic-example)
+- [More examples](/examples/templates)
 
 ## Install
 
@@ -44,9 +44,9 @@ await poopgen({
 
 A poopgen template is a folder that contains three things:
 
--   Files
--   Other folders
--   poopfiles
+- Files
+- Other folders
+- poopfiles
 
 For the following example, we will assume that this is the file tree for our generator:
 
@@ -88,10 +88,10 @@ The `after` function is executed after poopgen generates the directory
 
 Here are some of the things you could use them for:
 
--   ask the user for input
--   Install dependencies or create a git repository after the project has been generated
--   skipping a directory if a condition is not met
-    -   maybe a user doesn't want to opt in to a certain feature
+- ask the user for input
+- Install dependencies or create a git repository after the project has been generated
+- skipping a directory if a condition is not met
+    - maybe a user doesn't want to opt in to a certain feature
 
 ```js
 /** @type{import("poopgen").BeforeFn}  */
@@ -152,58 +152,6 @@ dest/
 
 ```ts
 console.log("Hello world from poopgen!");
-```
-
-## Extra
-
-### getCtx
-
-Poopgen exports a function named `getCtx` that allows you to access the current context inside of a poopfile.
-
-```js
-import { getCtx } from "poopgen";
-
-// so this...
-export function before() {
-	const ctx = getCtx();
-
-	ctx.data.message = "poopgen is awesome!";
-}
-
-// achieves the same as this
-export function before(ctx) {
-	ctx.data.message = "poopgen is awesome!";
-}
-
-// use getCtx whenever it makes sense to you!
-```
-
-Context is useful if you want to create helper functions, but don't necessarily want to have to pass the context to all of them.
-
-```js
-import { getCtx } from "poopgen";
-
-export function before() {
-	printTemplateData();
-}
-
-export function after() {
-	printDestPath();
-}
-
-// logs the inside of ctx.data (ctx.data is used to render the ejs templates)
-function printTemplateData() {
-	const ctx = getCtx();
-
-	console.log("rendering template files with", ctx.data);
-}
-
-// logs the destination of the generation
-function printDestinationPath() {
-	const ctx = getCtx();
-
-	console.log("project was generated to", ctx.dir.path);
-}
 ```
 
 ## Built with poopgen

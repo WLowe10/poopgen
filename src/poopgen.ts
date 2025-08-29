@@ -2,7 +2,6 @@ import path from "node:path";
 import fs from "node:fs/promises";
 import ejs from "ejs";
 import { parseDirectory, type DirectoryEntry, type FileEntry } from "./parse";
-import { context } from "./context";
 
 export class PoopgenError extends Error {
 	constructor(message: string, cause?: Error) {
@@ -62,7 +61,7 @@ async function processDirectoryEntry(dir: DirectoryEntry, data: TemplateData, pa
 
 		// poop lifecycle before
 		if (typeof poopModule.before === "function") {
-			await context.run(ctx, () => poopModule!.before(ctx));
+			await poopModule.before(ctx);
 		}
 	}
 
@@ -82,7 +81,7 @@ async function processDirectoryEntry(dir: DirectoryEntry, data: TemplateData, pa
 
 	// poop lifecycle after
 	if (poopModule && typeof poopModule.after === "function") {
-		await context.run(ctx, () => poopModule.after(ctx));
+		await poopModule.after(ctx);
 	}
 }
 
