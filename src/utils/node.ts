@@ -1,5 +1,5 @@
 import path from "node:path";
-import { execa, type Options } from "execa";
+import { execa, type Options as ExecaOptions } from "execa";
 
 /**
  * Converts a string into valid node package format (kebab case)
@@ -52,14 +52,8 @@ export function getNodePackageManager(): KnownPackageManager {
 /**
  * Installs node modules. Requires the selected package manager to be installed.
  */
-export async function installNodeModules(packageManager: KnownPackageManager, opts?: Options) {
-	const cwd = opts?.cwd ?? process.cwd();
-
-	if (!knownPackageManagers.includes(packageManager)) {
-		throw new Error("Failed to install modules, unsupported package manager");
-	}
-
+export async function installNodeModules(packageManager: KnownPackageManager, opts?: ExecaOptions) {
 	await execa(packageManager, ["install"], {
-		cwd,
+		...opts,
 	});
 }
