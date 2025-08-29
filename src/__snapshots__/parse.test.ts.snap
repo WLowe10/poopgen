@@ -1,0 +1,42 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`can parse a template using all features 1`] = `
+{
+  "entries": [
+    {
+      "content": "escaped",
+      "isTemplate": false,
+      "path": "package.json",
+      "type": "file",
+    },
+    {
+      "entries": [
+        {
+          "content": "nested",
+          "isTemplate": false,
+          "path": "nested.txt",
+          "type": "file",
+        },
+      ],
+      "path": "nested",
+      "poopfile": undefined,
+      "type": "directory",
+    },
+    {
+      "content": "test",
+      "isTemplate": false,
+      "path": "test.txt",
+      "type": "file",
+    },
+    {
+      "content": "test",
+      "isTemplate": true,
+      "path": "test2.txt",
+      "type": "file",
+    },
+  ],
+  "path": "template",
+  "poopfile": "template/_poop.js",
+  "type": "directory",
+}
+`;
