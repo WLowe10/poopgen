@@ -64,7 +64,7 @@ async function processDirectoryEntry(dir: DirectoryEntry, data: TemplateData, pa
 		try {
 			poopModule = (await import(ctx.dir.poopfile)) as PoopModule;
 		} catch (err: any) {
-			throw new PoopfileImportError(ctx.dir.poopfile);
+			throw new PoopfileImportError(ctx.dir.poopfile, err);
 		}
 
 		// poop lifecycle before
