@@ -24,14 +24,14 @@ beforeEach(() => {
 
 it("can parse a template using all features", async () => {
 	vol.fromJSON({
-		"./template/test.txt": "test",
-		"./template/test2.txt.ejs": "test",
-		"./template/[package.json]": "escaped",
-		"./template/_poop.js": "export async function before() {}",
-		"./template/nested/nested.txt": "nested",
+		"/template/test.txt": "test",
+		"/template/test2.txt.ejs": "test",
+		"/template/[package.json]": "escaped",
+		"/template/_poop.js": "export async function before() {}",
+		"/template/nested/nested.txt": "nested",
 	});
 
-	const entries = await parseDirectory("template");
+	const entries = await parseDirectory("/template");
 
 	expect(entries).toMatchSnapshot();
 });
