@@ -6,8 +6,8 @@ All of these examples are poopgen template directories. Here is how you may use 
 import { poopgen } from "poopgen";
 
 await poopgen({
-	templateDir: "./examples/basic",
-	destDir: "./dest",
+	templatePath: "./examples/basic",
+	destPath: "./dest",
 });
 ```
 

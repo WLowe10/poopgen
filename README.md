@@ -32,9 +32,9 @@ import { poopgen } from "poopgen";
 
 await poopgen({
 	// tell poopgen where your template lives
-	template: "./template",
+	templatePath: "./template",
 	// tell poopgen where to build your project to
-	dest: "./dest",
+	destPath: "./dest",
 });
 ```
 
@@ -67,9 +67,9 @@ import { poopgen } from "poopgen";
 
 await poopgen({
 	// tell poopgen where your template lives
-	template: "./template",
+	templatePath: "./template",
 	// tell poopgen where to build your project to
-	dest: "./dest",
+	destPath: "./dest",
 });
 ```
 
