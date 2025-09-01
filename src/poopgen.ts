@@ -32,7 +32,7 @@ async function processFileEntry(file: FileEntry, data: TemplateData, parentDest:
 		content = ejs.render(file.content, data);
 	}
 
-	await fs.writeFile(path.resolve(parentDest, file.path), content);
+	await fs.writeFile(path.join(parentDest, file.path), content);
 }
 
 export class PoopfileImportError extends PoopgenError {
@@ -117,14 +117,10 @@ export declare namespace poopgen {
 }
 
 export async function poopgen(opts: poopgen.Options) {
-	const templatePath = path.resolve(opts.templatePath);
-	const destPath = path.resolve(opts.destPath);
-	const data = opts?.data ?? {};
-
-	const template = await parseDirectory(templatePath);
+	const template = await parseDirectory(opts.templatePath);
 
 	// strip the name of the root template directory
 	template.path = "";
 
-	await processDirectoryEntry(template, data, destPath);
+	await processDirectoryEntry(template, opts.data ?? {}, opts.destPath);
 }

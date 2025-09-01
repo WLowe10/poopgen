@@ -1,19 +1,19 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
-export type FileEntry = {
+export interface FileEntry {
 	type: "file";
 	path: string;
 	content: string;
 	isTemplate?: boolean;
-};
+}
 
-export type DirectoryEntry = {
+export interface DirectoryEntry {
 	type: "directory";
 	path: string;
 	entries: Entry[];
 	poopfile?: string;
-};
+}
 
 export type Entry = FileEntry | DirectoryEntry;
 
@@ -24,7 +24,7 @@ export async function parseDirectory(templatePath: string): Promise<DirectoryEnt
 	let poopfile;
 
 	if (poopfileIdx > -1) {
-		poopfile = path.join(templatePath, "_poop.js");
+		poopfile = path.resolve(templatePath, "_poop.js");
 
 		// remove the poopfile from the entities so we don't generate it
 		entities.splice(poopfileIdx, 1);
