@@ -1,7 +1,7 @@
 {
 	"name": "poopgen",
 	"type": "module",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "Simple and flexible project generator",
 	"license": "MIT",
 	"author": {
